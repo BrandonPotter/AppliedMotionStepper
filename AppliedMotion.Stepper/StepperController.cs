@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace AppliedMotion.Stepper
 {
@@ -14,7 +11,7 @@ namespace AppliedMotion.Stepper
     {
         public string IpAddress { get; private set; }
         private UdpClient _udpClient;
-        bool _waitingForResponse = false;
+        private bool _waitingForResponse = false;
 
         public StepperController(string ipAddress)
         {
@@ -34,7 +31,7 @@ namespace AppliedMotion.Stepper
             System.Array.Copy(sclString, 0, sendBytes, 2, sclString.Length);
             sendBytes[sendBytes.Length - 1] = 13;
             _udpClient.Send(sendBytes, sendBytes.Length);
-            //Console.WriteLine("TX: " + command);
+            Debug.Print($"TX: {command}");
         }
 
         private string GetResponse()
@@ -50,14 +47,11 @@ namespace AppliedMotion.Stepper
                 _waitingForResponse = false;
                 return null;
             }
-            //Console.WriteLine("Available: " + _udpClient.Available.ToString());
 
-            //Console.WriteLine(_udpClient.Available.ToString() + " bytes available");
             IPEndPoint remoteIpEndPoint = new IPEndPoint(IPAddress.Any, 7777);
-
-            Byte[] receiveBytes = _udpClient.Receive(ref remoteIpEndPoint);
+            byte[] receiveBytes = _udpClient.Receive(ref remoteIpEndPoint);
             _waitingForResponse = false;
-            Byte[] sclString = new byte[receiveBytes.Length - 2];
+            byte[] sclString = new byte[receiveBytes.Length - 2];
 
             for (int i = 0; i < sclString.Length; i++)
             {
@@ -66,7 +60,6 @@ namespace AppliedMotion.Stepper
             return Encoding.ASCII.GetString(sclString);
         }
 
-        
         public string SendSclCommandAndGetResponse(string command)
         {
             return SendSclCommandAndGetResponse(command, TimeSpan.FromSeconds(1));
@@ -74,9 +67,10 @@ namespace AppliedMotion.Stepper
 
         public string SendSclCommandAndGetResponse(string command, TimeSpan timeout)
         {
+            int repsonseTimeout = 5000;
             Stopwatch swConflictTimeout = new Stopwatch();
             swConflictTimeout.Start();
-            while (_waitingForResponse && swConflictTimeout.ElapsedMilliseconds < 5000)
+            while (_waitingForResponse && swConflictTimeout.ElapsedMilliseconds < repsonseTimeout)
             {
                 System.Threading.Thread.Sleep(10);
             }
@@ -90,7 +84,7 @@ namespace AppliedMotion.Stepper
                 var responseText = GetResponse();
                 if (!string.IsNullOrWhiteSpace(responseText))
                 {
-                    // Console.WriteLine("RX: " + responseText);
+                    Debug.Print($"RX: {responseText} @ {DateTime.Now.ToString("hh:mm:ss")}");
                     return responseText.Trim();
                 }
                 System.Threading.Thread.Sleep(10);
@@ -102,6 +96,20 @@ namespace AppliedMotion.Stepper
         public void EnableMotor()
         {
             SendSclCommandAndGetResponse("ME");
+        }
+
+        public void SetNumberStepsPerRevolution(int numberSteps)
+        {
+            numberSteps = MathClass.ClosestEvenNumber(numberSteps);
+            if (numberSteps <= 51200 && numberSteps >= 200)
+            {
+                SendSclCommandAndGetResponse($"EG{numberSteps}");
+            }
+            else
+            {
+                Console.WriteLine($"setting default because {numberSteps} out of bounds");
+                SendSclCommandAndGetResponse($"EG20000");
+            }
         }
 
         public void DisableMotor()
@@ -116,9 +124,9 @@ namespace AppliedMotion.Stepper
 
         public void StartJog(double speed, double acceleration, double deceleration)
         {
-            SendSclCommandAndGetResponse("JS" + System.Math.Round(speed, 2).ToString());
-            SendSclCommandAndGetResponse("JA" + System.Math.Round(acceleration, 2).ToString());
-            SendSclCommandAndGetResponse("JL" + System.Math.Round(deceleration, 2).ToString());
+            SendSclCommandAndGetResponse($"JS{Math.Round(speed, 2)}");
+            SendSclCommandAndGetResponse($"JA{Math.Round(acceleration, 2)}");
+            SendSclCommandAndGetResponse($"JL{Math.Round(deceleration, 2)}");
             SendSclCommandAndGetResponse("JM1");
             SendSclCommandAndGetResponse("CJ");
         }
@@ -135,12 +143,12 @@ namespace AppliedMotion.Stepper
 
         public void SetVelocity(double revsPerSec)
         {
-            SendSclCommandAndGetResponse("VE" + System.Math.Round(revsPerSec, 3).ToString());
+            SendSclCommandAndGetResponse($"VE{System.Math.Round(revsPerSec, 3)}");
         }
 
         public void ChangeJogSpeed(double speed)
         {
-            SendSclCommandAndGetResponse("CS" + System.Math.Round(speed, 2).ToString());
+            SendSclCommandAndGetResponse($"CS{System.Math.Round(speed, 2)}");
         }
 
         public MotorStatus GetStatus()
@@ -190,29 +198,63 @@ namespace AppliedMotion.Stepper
 
         public void ResetEncoderPosition(long newValue)
         {
-            SendSclCommandAndGetResponse("EP" + newValue.ToString());
-            SendSclCommandAndGetResponse("SP" + newValue.ToString());
+            SendSclCommandAndGetResponse($"EP{newValue}");
+            SendSclCommandAndGetResponse($"SP{newValue}");
         }
 
         public void MoveRelativeSteps(long steps)
         {
-            SendSclCommandAndGetResponse("DI" + steps.ToString());
-            SendSclCommandAndGetResponse("FL");
+            SendSclCommandAndGetResponse($"DI{steps}");
+            SendSclCommandAndGetResponse($"FL");
             WaitForStop();
         }
 
         public void MoveToAbsolutePosition(long position)
         {
-            SendSclCommandAndGetResponse("DI" + position.ToString());
-            SendSclCommandAndGetResponse("FP");
+            SendSclCommandAndGetResponse($"DI{position}");
+            SendSclCommandAndGetResponse($"FP");
             WaitForStop();
+        }
+
+        public long GetEncoderCounts()
+        {
+            SendSclCommand("IFD");
+            var response = SendSclCommandAndGetResponse($"IE");
+
+            try
+            {
+                if (response.StartsWith("IE="))
+                {
+                    response = response.Substring(3).Trim();
+                    long encoderPosition = long.Parse(response);
+                    return encoderPosition;
+                }
+                else if (response == "*")
+                {
+                    throw new Exception("Invalid status for encoder position query");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            throw new Exception("Invalid status for encoder position query");
         }
 
         internal void WaitForStop()
         {
-            while (!GetStatus().InPosition)
+            try
             {
-                System.Threading.Thread.Sleep(10);
+                while (GetStatus().Moving.ToString() != "False")
+                {
+                    Debug.Print(GetAlarmCode().ToString());
+                    System.Threading.Thread.Sleep(00);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                Debug.Print(e.Message);
             }
         }
     }

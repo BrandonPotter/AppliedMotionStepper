@@ -1,54 +1,64 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections;
 
 namespace AppliedMotion.Stepper
 {
-    public class MotorStatus
+    public class AlarmCode
     {
-        internal MotorStatus(BitArray bitStatus)
+        internal AlarmCode(BitArray bitStatus)
         {
-            MotorEnabled = bitStatus[0];
-            Sampling = bitStatus[1];
-            DriveFault = bitStatus[2];
-            InPosition = bitStatus[3];
-            Moving = bitStatus[4];
-            Jogging = bitStatus[5];
-            Stopping = bitStatus[6];
-            Waiting = bitStatus[7];
-            Saving = bitStatus[8];
-            Alarm = bitStatus[9];
-            Homing = bitStatus[10];
-            WaitOnTimer = bitStatus[11];
-            WizardRunning = bitStatus[12];
-            CheckingEncoder = bitStatus[13];
-            QProgramRunning = bitStatus[14];
-            Initializing = bitStatus[15];
+            PositionLimit = bitStatus[0];
+            CcwLimit = bitStatus[1];
+            CwLimit = bitStatus[2];
+            OverTemperature = bitStatus[3];
+            ExcessRegenInternalVoltage = bitStatus[4];
+            OverVoltage = bitStatus[5];
+            UnderVoltage = bitStatus[6];
+            OverCurrent = bitStatus[7];
+            BadHallSensorOpenMotorWinding = bitStatus[8];
+            BadEncoder = bitStatus[9];
+            CommError = bitStatus[10];
+            BadFlash = bitStatus[11];
+            WizardFailedNoMove = bitStatus[12];
+            CurrentFoldbackMotorResistance = bitStatus[13];
+            BlankQSegment = bitStatus[14];
+            NoMove = bitStatus[15];
         }
 
-        public bool MotorEnabled { get; set; }
-        public bool Sampling { get; set; }
-        public bool DriveFault { get; set; }
-        public bool InPosition { get; set; }
-        public bool Moving { get; set; }
-        public bool Jogging { get; set; }
-        public bool Stopping { get; set; }
-        public bool Waiting { get; set; }
-        public bool Saving { get; set; }
-        public bool Alarm { get; set; }
-        public bool Homing { get; set; }
-        public bool WaitOnTimer { get; set; }
-        public bool WizardRunning { get; set; }
-        public bool CheckingEncoder { get; set; }
-        public bool QProgramRunning { get; set; }
-        public bool Initializing { get; set; }
+        public bool NoMove { get; set; }
+
+        public bool BlankQSegment { get; set; }
+
+        public bool CurrentFoldbackMotorResistance { get; set; }
+
+        public bool WizardFailedNoMove { get; set; }
+
+        public bool BadFlash { get; set; }
+
+        public bool CommError { get; set; }
+
+        public bool BadEncoder { get; set; }
+
+        public bool BadHallSensorOpenMotorWinding { get; set; }
+
+        public bool OverCurrent { get; set; }
+
+        public bool UnderVoltage { get; set; }
+
+        public bool OverVoltage { get; set; }
+
+        public bool ExcessRegenInternalVoltage { get; set; }
+
+        public bool OverTemperature { get; set; }
+
+        public bool CwLimit { get; set; }
+
+        public bool CcwLimit { get; set; }
+
+        public bool PositionLimit { get; set; }
 
         public override string ToString()
         {
-            return string.Join(", ", Utility.Reflection.ReflectTrueBoolPropertiesToList<MotorStatus>(this));
+            return string.Join(", ", Utility.Reflection.ReflectTrueBoolPropertiesToList<AlarmCode>(this));
         }
     }
 }

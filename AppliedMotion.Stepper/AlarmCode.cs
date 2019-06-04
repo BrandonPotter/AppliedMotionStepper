@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections;
 
 namespace AppliedMotion.Stepper
 {
@@ -12,8 +7,8 @@ namespace AppliedMotion.Stepper
         internal AlarmCode(BitArray bitStatus)
         {
             PositionLimit = bitStatus[0];
-            CCWLimit = bitStatus[1];
-            CWLimit = bitStatus[2];
+            CcwLimit = bitStatus[1];
+            CwLimit = bitStatus[2];
             OverTemperature = bitStatus[3];
             ExcessRegenInternalVoltage = bitStatus[4];
             OverVoltage = bitStatus[5];
@@ -55,9 +50,9 @@ namespace AppliedMotion.Stepper
 
         public bool OverTemperature { get; set; }
 
-        public bool CWLimit { get; set; }
+        public bool CwLimit { get; set; }
 
-        public bool CCWLimit { get; set; }
+        public bool CcwLimit { get; set; }
 
         public bool PositionLimit { get; set; }
 
