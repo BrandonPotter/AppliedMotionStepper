@@ -98,9 +98,9 @@ namespace AppliedMotion.Stepper
             SendSclCommandAndGetResponse("ME");
         }
 
-        public void SetNumberStepsPerRevolution(int numberSteps)
+        public void SetNumberStepsPerRevolution(double numberSteps)
         {
-            numberSteps = MathClass.ClosestEvenNumber(numberSteps);
+            numberSteps = Math.Round(numberSteps, 2);
             if (numberSteps <= 51200 && numberSteps >= 200)
             {
                 SendSclCommandAndGetResponse($"EG{numberSteps}");
