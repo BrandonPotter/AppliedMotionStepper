@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AppliedMotion.Stepper.Utility
 {
@@ -11,7 +8,7 @@ namespace AppliedMotion.Stepper.Utility
         internal static List<string> ReflectTrueBoolPropertiesToList<T>(T obj)
         {
             var propInfo = obj.GetType().GetProperties().Where(p => p.PropertyType == typeof(bool)).ToList();
-            return (from pInfo in propInfo where (bool) pInfo.GetValue(obj) select pInfo.Name).ToList();
+            return (from pInfo in propInfo where (bool)pInfo.GetValue(obj) select pInfo.Name).ToList();
         }
     }
 }
